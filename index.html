@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth bg-[#0A0D14]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amine Kacemi | Cybersécurité & Infrastructure</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { cyber: ['Orbitron', 'sans-serif'], mono: ['Space Mono', 'monospace'] },
+            colors: { darkBG: '#0A0D14', cardBG: '#111520', neonBlue: '#00d2ff', neonRed: '#ff3355' }
+          }
+        }
+      }
+    </script>
+
+    <style>
+        @media (min-width: 768px) {
+            body { cursor: none; }
+            #cursor-dot { width: 6px; height: 6px; background-color: #00d2ff; position: fixed; top: 0; left: 0; border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%, -50%); }
+            #cursor-outline { width: 36px; height: 36px; border: 1px solid rgba(0, 210, 255, 0.4); position: fixed; top: 0; left: 0; border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%, -50%); transition: width 0.2s, height 0.2s, background-color 0.2s; }
+        }
+        .glitch { position: relative; display: inline-block; }
+        .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: -1; }
+        .glitch::before { left: 2px; text-shadow: -1px 0 rgba(255, 51, 85, 0.7); animation: noise-anim-2 3s infinite linear alternate-reverse; }
+        .glitch::after { left: -2px; text-shadow: -1px 0 rgba(0, 210, 255, 0.7); animation: noise-anim 2s infinite linear alternate-reverse; }
+        @keyframes noise-anim { 0% { clip-path: inset(20% 0 80% 0); } 50% { clip-path: inset(60% 0 10% 0); } 100% { clip-path: inset(30% 0 20% 0); } }
+        @keyframes noise-anim-2 { 0% { clip-path: inset(10% 0 60% 0); } 50% { clip-path: inset(30% 0 20% 0); } 100% { clip-path: inset(50% 0 30% 0); } }
+        
+        /* Interactive Card & Glow */
+        .interactive-card { position: relative; background: #111520; border-radius: 0.75rem; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05); transition: transform 0.3s ease; }
+        .interactive-card:hover { transform: translateY(-2px); border-color: rgba(0, 210, 255, 0.2); }
+        .interactive-card::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(600px circle at var(--mouse-x, 0) var(--mouse-y, 0), rgba(0, 210, 255, 0.04), transparent 40%); opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 1; }
+        .interactive-card:hover::before { opacity: 1; }
+        .interactive-card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; background: radial-gradient(400px circle at var(--mouse-x, 0) var(--mouse-y, 0), rgba(0, 210, 255, 0.5), transparent 40%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 2; }
+        .interactive-card:hover::after { opacity: 1; }
+        .card-content { position: relative; z-index: 3; border-radius: inherit; height: calc(100% - 2px); margin: 1px; background: #0a0a0c; }
+        
+        /* 3D Flip Card Styles */
+        .flip-container { perspective: 1000px; display: block; }
+        .flip-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.2, 1); background: transparent !important; }
+        .flip-container:hover .flip-inner { transform: rotateY(180deg); }
+        .flip-front, .flip-back { backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: inherit; background: #111520; }
+        .flip-front { width: 100%; height: 100%; position: relative; z-index: 2; transform: rotateY(0deg); }
+        .flip-back { position: absolute !important; top: 0; left: 0; width: 100%; height: 100%; transform: rotateY(180deg); overflow: hidden; z-index: 1; }
+
+        .cursor-blink { animation: blink 1s step-end infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        #preloader { position: fixed; inset: 0; background: #0A0D14; z-index: 99999; display: flex; flex-direction: column; justify-content: center; padding: 2rem; }
+    </style>
+</head>
+<body class="bg-darkBG text-gray-300 font-mono antialiased overflow-hidden min-h-screen">
+
+    <!-- Ambient Background Blobs -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-neonBlue rounded-full blur-[150px] opacity-10"></div>
+        <div class="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-neonRed rounded-full blur-[150px] opacity-10"></div>
+        <div class="absolute inset-0 opacity-[0.02]" style="background-image: linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px); background-size: 40px 40px;"></div>
+    </div>
+
+    <div id="cursor-dot" class="hidden md:block"></div>
+    <div id="cursor-outline" class="hidden md:block"></div>
+
+    <div id="preloader" class="font-mono text-neonBlue text-sm md:text-base">
+        <div class="max-w-3xl mx-auto w-full">
+            <p id="boot-text-1" class="mb-2 text-gray-500"></p>
+            <p id="boot-text-2" class="mb-2 text-neonRed"></p>
+            <p id="boot-text-3" class="mb-2 text-neonBlue"></p>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main-content" class="opacity-0 transition-opacity duration-1000 h-screen overflow-y-auto scroll-smooth relative z-10">
+
+        <header class="fixed top-0 w-full z-50 bg-darkBG/80 backdrop-blur-md border-b border-neonBlue/10 px-6 py-4 flex justify-between items-center">
+            <div class="font-cyber text-gray-100 font-bold text-xl tracking-wider">AMK<span class="text-neonRed animate-pulse">_</span></div>
+            <nav class="hidden md:flex gap-8 font-mono text-xs text-gray-400">
+                <a href="#projets" class="smooth-link hover:text-neonBlue transition-colors">./Projets</a>
+                <a href="#skills" class="smooth-link hover:text-neonBlue transition-colors">./Compétences</a>
+                <a href="#parcours" class="smooth-link hover:text-neonBlue transition-colors">./Parcours</a>
+                <a href="https://github.com/Shadowk05" target="_blank" class="hover:text-white transition-colors">./GitHub</a>
+            </nav>
+            <a href="#contact" class="smooth-link border border-neonBlue/30 text-neonBlue px-4 py-2 text-xs hover:bg-neonBlue/10 transition-all">
+                [ CONTACT ]
+            </a>
+        </header>
+
+        <!-- HERO SECTION -->
+        <section id="hero" class="min-h-screen flex flex-col justify-center px-6 pt-24 md:pt-20">
+            <div class="max-w-6xl mx-auto w-full flex flex-col-reverse md:flex-row items-center gap-12">
+                <div class="flex-1">
+                    <div class="inline-block px-3 py-1 border border-neonBlue/20 bg-neonBlue/5 text-neonBlue text-xs mb-6 font-mono rounded">
+                        > LOC: CASABLANCA, MA | STATUS: ONLINE
+                    </div>
+                    
+                    <h1 class="text-4xl md:text-6xl lg:text-7xl font-black mb-4 uppercase font-cyber tracking-tight break-words text-white">
+                        <span class="glitch" data-text="AMINE KACEMI">AMINE KACEMI</span>
+                    </h1>
+                    
+                    <div class="h-8 md:h-10 mb-6 flex items-center">
+                        <p class="text-lg md:text-xl font-cyber text-neonBlue uppercase tracking-wide">
+                            > <span id="typewriter-text"></span><span class="cursor-blink inline-block ml-1 w-2 md:w-3 h-5 md:h-6 bg-neonBlue align-middle"></span>
+                        </p>
+                    </div>
+                    
+                    <p class="text-gray-400 mb-10 max-w-xl leading-relaxed text-sm md:text-base border-l-2 border-neonBlue/50 pl-4">
+                        <strong class="text-gray-100 font-bold">Technicien en Électricité de Maintenance Industrielle</strong> orienté pratique avec une forte spécialisation en <span class="text-neonBlue font-semibold">informatique</span>, <span class="text-neonBlue font-semibold">cybersécurité</span> et <span class="text-neonRed font-semibold">ethical hacking</span>. 
+                        Mon objectif est de construire une carrière à l’intersection des <span class="text-neonRed font-semibold">systèmes industriels (OT)</span>, de l’<span class="text-neonBlue font-semibold">infrastructure IT</span> et de la <strong class="text-gray-100">sécurité offensive</strong>.
+                    </p>
+
+                    <div class="flex flex-wrap gap-4 font-mono text-sm">
+                        <a href="#projets" class="smooth-link px-6 py-3 bg-neonBlue text-darkBG font-bold uppercase hover:bg-white transition-colors duration-300 rounded-sm">
+                            Projets Techniques
+                        </a>
+                        <a href="https://linkedin.com/in/aminekacemi" target="_blank" class="px-6 py-3 border border-gray-600 text-gray-300 hover:border-neonBlue hover:text-neonBlue transition-colors duration-300 rounded-sm">
+                            LinkedIn
+                        </a>
+                        <a href="https://github.com/Shadowk05" target="_blank" class="px-6 py-3 border border-gray-600 text-gray-300 hover:border-white hover:text-white transition-colors duration-300 rounded-sm">
+                            GitHub
+                        </a>
+                    </div>
+                </div>
+
+                <div class="flex-1 flex justify-center md:justify-end">
+                    <div class="relative group mt-10 md:mt-0">
+                        <div class="absolute -inset-2 bg-gradient-to-r from-neonBlue to-neonRed opacity-20 blur-xl group-hover:opacity-40 transition duration-500 rounded-lg"></div>
+                        <div class="absolute inset-0 border border-neonBlue/20 rounded-sm transform translate-x-3 translate-y-3 z-0 transition-transform duration-500 group-hover:translate-x-5 group-hover:translate-y-5"></div>
+                        
+                        <div class="relative z-10 w-56 md:w-72 lg:w-80 aspect-[4/5] overflow-hidden rounded-sm border border-white/10 bg-cardBG">
+                            <img src="assets/images/photo 1.png" alt="Amine Kacemi" class="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 ease-in-out scale-105 group-hover:scale-100" onerror="this.style.display='none'">
+                        </div>
+
+                        <div class="absolute top-[-2px] left-[-2px] w-6 h-6 border-t-2 border-l-2 border-neonBlue z-20 pointer-events-none transition-all group-hover:w-8 group-hover:h-8"></div>
+                        <div class="absolute bottom-[10px] right-[10px] w-6 h-6 border-b-2 border-r-2 border-neonRed z-20 pointer-events-none transition-all group-hover:w-8 group-hover:h-8 group-hover:bottom-[-2px] group-hover:right-[-2px]"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PROJETS SECTION -->
+        <section id="projets" class="py-20 px-6 scroll-mt-16">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-2xl md:text-3xl font-cyber text-white mb-12 flex items-center gap-4">
+                    <span class="text-neonRed text-sm">01.</span> INGÉNIERIE & PROJETS
+                    <div class="h-[1px] flex-1 bg-gradient-to-r from-neonRed/30 to-transparent"></div>
+                </h2>
+
+                <!-- Grille standard (3 colonnes uniformes) -->
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    <!-- CARTE NUCLEAR LAB ANIMÉE EN 3D FLIP (Taille normale) -->
+                    <div class="interactive-card flip-container group cursor-pointer min-h-[360px] md:min-h-[380px]">
+                        <div class="card-content flip-inner">
+                            
+                            <!-- FACE AVANT -->
+                            <div class="flip-front p-6 flex flex-col justify-center h-full bg-[#111520]">
+                                <h3 class="text-lg text-neonBlue font-bold mb-4 font-cyber flex items-center justify-between">
+                                    Nuclear Lab
+                                    <svg class="w-5 h-5 text-gray-500 opacity-50 group-hover:opacity-100 group-hover:text-neonBlue transition-colors animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                </h3>
+                                <p class="text-gray-400 text-sm mb-6 flex-1 leading-relaxed">
+                                    Environnement de pentesting multi-zones (EVE-NG). Simulation de réseaux avec <strong class="text-gray-200">serveurs Ubuntu (PLCs)</strong>. Intégration d'un <strong class="text-gray-200">Fortigate Firewall</strong> et <strong class="text-gray-200">Cisco vIOS</strong> pour tests via Kali Linux, Metasploit et Nmap.
+                                </p>
+                                <div class="flex gap-2 flex-wrap text-xs font-mono mt-auto">
+                                    <span class="bg-neonBlue/10 border border-neonBlue/20 text-neonBlue px-2 py-1 rounded">Ubuntu (PLCs)</span>
+                                    <span class="bg-gray-800 border border-gray-700 text-gray-300 px-2 py-1 rounded">Fortigate</span>
+                                    <span class="bg-gray-800 border border-gray-700 text-gray-300 px-2 py-1 rounded">Cisco vIOS</span>
+                                    <span class="bg-neonRed/10 border border-neonRed/20 text-neonRed px-2 py-1 rounded">Metasploit</span>
+                                </div>
+                            </div>
+
+                            <!-- FACE ARRIÈRE (IMAGE) -->
+                            <div class="flip-back bg-[#0A0D14] flex items-center justify-center p-2 border border-neonBlue/20 rounded-md">
+                                <img src="assets/images/nuclear-lab.png" alt="Nuclear Lab Topology" class="w-full h-full object-contain relative z-10" onerror="this.style.display='none'">
+                                
+                                <div class="absolute top-3 left-3 bg-darkBG/90 px-2 py-1 text-[10px] text-neonBlue border border-neonBlue/30 rounded font-mono shadow-[0_0_10px_#00d2ff] z-20">
+                                    TOPOLOGIE_EVE-NG
+                                </div>
+                                <div class="absolute bottom-3 right-3 bg-darkBG/90 px-2 py-1 text-[10px] text-neonRed border border-neonRed/30 rounded font-mono shadow-[0_0_10px_#ff3355] animate-pulse z-20">
+                                    [LIVE_VIEW]
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Carte IT Entreprise -->
+                    <div class="interactive-card min-h-[360px] md:min-h-[380px]">
+                        <div class="card-content p-6 flex flex-col h-full bg-[#111520]">
+                            <h3 class="text-lg text-neonBlue font-bold mb-3 font-cyber">Infra IT Entreprise</h3>
+                            <p class="text-gray-400 text-sm mb-6 flex-1 leading-relaxed">
+                                Conception et déploiement d'un réseau d'entreprise simulé. Implémentation d'un domaine Active Directory, configuration de serveurs Ubuntu, et administration centralisée des stratégies de sécurité (GPO, DNS, DHCP).
+                            </p>
+                            <div class="flex gap-2 flex-wrap text-xs font-mono mt-auto">
+                                <span class="bg-neonBlue/10 border border-neonBlue/20 text-neonBlue px-2 py-1 rounded">Active Directory</span>
+                                <span class="bg-gray-800 border border-gray-700 text-gray-300 px-2 py-1 rounded">Windows Server</span>
+                                <span class="bg-gray-800 border border-gray-700 text-gray-300 px-2 py-1 rounded">GPO / DNS</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Carte WatsColis -->
+                    <div class="interactive-card min-h-[360px] md:min-h-[380px]">
+                        <div class="card-content p-6 flex flex-col h-full bg-[#111520]">
+                            <h3 class="text-lg text-neonBlue font-bold mb-3 font-cyber">WatsColis (SaaS)</h3>
+                            <p class="text-gray-400 text-sm mb-6 flex-1 leading-relaxed">
+                                Développement d'une solution d'automatisation B2B e-commerce. Implémentation d'un système de traçabilité par QR codes, intégration des flux de notification WhatsApp, et mise en conformité avec les standards de la DGI marocaine.
+                            </p>
+                            <div class="flex gap-2 flex-wrap text-xs font-mono mt-auto">
+                                <span class="bg-neonBlue/10 border border-neonBlue/20 text-neonBlue px-2 py-1 rounded">SaaS B2B</span>
+                                <span class="bg-gray-800 border border-gray-700 text-gray-300 px-2 py-1 rounded">API WhatsApp</span>
+                                <span class="bg-gray-800 border border-gray-700 text-gray-300 px-2 py-1 rounded">Conformité DGI</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- COMPÉTENCES -->
+        <section id="skills" class="py-20 px-6 bg-cardBG/50 border-y border-neonBlue/10 scroll-mt-16">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-2xl md:text-3xl font-cyber text-white mb-12 flex items-center gap-4">
+                    <span class="text-neonBlue text-sm">02.</span> ARSENAL TECHNIQUE
+                    <div class="h-[1px] flex-1 bg-gradient-to-r from-neonBlue/30 to-transparent"></div>
+                </h2>
+                
+                <div class="grid md:grid-cols-3 gap-6 mb-6">
+                    <div class="interactive-card">
+                        <div class="card-content p-6 h-full bg-[#111520]">
+                            <h4 class="text-neonBlue font-cyber text-sm tracking-wider mb-4 border-b border-neonBlue/20 pb-2">SÉCURITÉ & RÉSEAU</h4>
+                            <ul class="space-y-3 text-sm text-gray-300">
+                                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-neonBlue rounded-full shadow-[0_0_5px_#00d2ff]"></div> Pentesting, Metasploit, Nmap</li>
+                                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-neonBlue rounded-full shadow-[0_0_5px_#00d2ff]"></div> OSINT & Analyse de malwares</li>
+                                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-neonBlue rounded-full shadow-[0_0_5px_#00d2ff]"></div> Proxychains</li>
+                                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-neonBlue rounded-full shadow-[0_0_5px_#00d2ff]"></div> Admin Linux & Windows Server</li>
+                                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-neonBlue rounded-full shadow-[0_0_5px_#00d2ff]"></div> EVE-NG, Fortigate Firewall, Cisco vIOS</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="interactive-card">
+                        <div class="card-content p-6 h-full bg-[#111520]">
+                            <h4 class="text-neonRed font-cyber text-sm tracking-wider mb-4 border-b border-neonRed/20 pb-2">ÉLECTRICITÉ & AUTOMATISATION</h4>
+                            <ul class="space-y-3 text-sm text-gray-300">
+                                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-neonRed rounded-full shadow-[0_0_5px_#ff3355]"></div> Lecture de schémas électriques</li>
+                                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-neonRed rounded-full shadow-[0_0_5px_#ff3355]"></div> TIA Portal & Auto. Studio</li>
+                                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-neonRed rounded-full shadow-[0_0_5px_#ff3355]"></div> GRAFCET</li>
+                                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-neonRed rounded-full shadow-[0_0_5px_#ff3355]"></div> Logique Ladder</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="interactive-card">
+                        <div class="card-content p-6 h-full bg-[#111520]">
+                            <h4 class="text-white font-cyber text-sm tracking-wider mb-4 border-b border-gray-600 pb-2">HARDWARE & EMBARQUÉ</h4>
+                            <ul class="space-y-3 text-sm text-gray-300">
+                                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div> Raspberry Pi 5, ESP32, Arduino</li>
+                                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div> Conception de Firmwares</li>
+                                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div> Diagnostic matériel IT</li>
+                                <li class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div> Déploiement LLM Local</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="interactive-card">
+                    <div class="card-content p-6 flex flex-col md:flex-row gap-8 items-center md:items-start justify-between bg-[#111520]">
+                        <div class="flex-1">
+                            <h4 class="text-gray-100 font-cyber text-sm tracking-wider mb-3">>> CERTIFICATIONS</h4>
+                            <p class="text-sm text-neonBlue flex items-center gap-2 font-mono">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 00-.707.293l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7A1 1 0 0010 2zm3 8V7a1 1 0 10-2 0v3H9V7a1 1 0 10-2 0v3H6V7a1 1 0 10-2 0v3a1 1 0 001 1h8a1 1 0 001-1z" clip-rule="evenodd"></path></svg>
+                                Introduction to Cybersecurity
+                            </p>
+                        </div>
+                        <div class="flex-1 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-8">
+                            <h4 class="text-gray-100 font-cyber text-sm tracking-wider mb-3">>> LANGUES</h4>
+                            <div class="flex flex-wrap gap-2 text-xs text-neonBlue font-mono">
+                                <span class="bg-neonBlue/10 px-3 py-1 border border-neonBlue/20 rounded">Anglais (Professionnel)</span>
+                                <span class="bg-neonBlue/10 px-3 py-1 border border-neonBlue/20 rounded">Français (Technique)</span>
+                                <span class="bg-gray-800 px-3 py-1 border border-gray-700 text-gray-300 rounded">Arabe (Maternel)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- EXPÉRIENCE & FORMATION -->
+        <section id="parcours" class="py-20 px-6 scroll-mt-16">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-2xl md:text-3xl font-cyber text-white mb-12 flex items-center gap-4">
+                    <span class="text-gray-500 text-sm">03.</span> EXPÉRIENCE & FORMATION
+                    <div class="h-[1px] flex-1 bg-gradient-to-r from-gray-700 to-transparent"></div>
+                </h2>
+
+                <div class="border-l border-gray-700 ml-4 pl-8 space-y-12">
+                    
+                    <div class="relative group">
+                        <div class="absolute -left-[39px] top-1 w-4 h-4 bg-neonRed rounded-full border border-darkBG group-hover:scale-110 transition-transform shadow-[0_0_10px_#ff3355]"></div>
+                        <p class="text-neonRed text-xs font-mono mb-2">Septembre 2024 - Juillet 2026</p>
+                        <h4 class="text-lg text-white font-bold mb-1">ITA Hay Mohammadi</h4>
+                        <p class="text-neonRed text-sm italic mb-2">Technicien Spécialisé en Électricité de Maintenance Industrielle</p>
+                        <p class="text-sm text-gray-400 leading-relaxed">Formation approfondie en maintenance d'équipements industriels, conception d'armoires électriques, automatisme et schémas électriques.</p>
+                    </div>
+
+                    <div class="relative group">
+                        <div class="absolute -left-[39px] top-1 w-4 h-4 bg-neonBlue rounded-full shadow-[0_0_10px_#00d2ff] group-hover:scale-110 transition-transform"></div>
+                        <p class="text-neonBlue text-xs font-mono mb-2">Avril 2024 - Présent</p>
+                        <h4 class="text-lg text-white font-bold mb-1">Études Indépendantes</h4>
+                        <p class="text-neonBlue text-sm italic mb-2">Sécurité des systèmes informatiques et d'information / Assurance de l'information.</p>
+                        <ul class="text-sm text-gray-400 space-y-1 list-disc ml-4">
+                            <li>Apprentissage autodidacte des environnements de pentesting (Metasploit, Nmap).</li>
+                            <li>Administration système et sécurité offensive.</li>
+                        </ul>
+                    </div>
+
+                    <div class="relative group">
+                        <div class="absolute -left-[39px] top-1 w-4 h-4 bg-gray-500 rounded-full border border-darkBG group-hover:scale-110 transition-transform"></div>
+                        <p class="text-gray-400 text-xs font-mono mb-2">Casablanca | Alternance - 8 Mois</p>
+                        <h4 class="text-lg text-white font-bold mb-1">VINCI Energies (CEGELEC)</h4>
+                        <p class="text-gray-300 text-sm italic mb-3">Technicien en Électricité de Maintenance Industrielle (Atelier Filaire)</p>
+                        <ul class="text-sm text-gray-400 space-y-2 list-disc ml-4 leading-relaxed">
+                            <li>Assistance aux opérations de maintenance électrique industrielle.</li>
+                            <li>Participation à l’installation, au câblage et aux tests d’armoires électriques.</li>
+                            <li>Application rigoureuse des schémas électriques et des procédures de sécurité sur site.</li>
+                        </ul>
+                    </div>
+
+                    <div class="relative group">
+                        <div class="absolute -left-[39px] top-1 w-4 h-4 bg-gray-500 rounded-full border border-darkBG group-hover:scale-110 transition-transform"></div>
+                        <p class="text-gray-400 text-xs font-mono mb-2">Casablanca-Settat | Mars 2023</p>
+                        <h4 class="text-lg text-white font-bold mb-1">Munisys</h4>
+                        <p class="text-gray-300 text-sm italic mb-3">Stagiaire Technicien Matériel (Hardware)</p>
+                        <ul class="text-sm text-gray-400 space-y-2 list-disc ml-4 leading-relaxed">
+                            <li>Diagnostic et réparation d’ordinateurs portables, de bureau et de serveurs.</li>
+                            <li>Remplacement de composants matériels, tests système et validation post-intervention.</li>
+                            <li>Collaboration avec des techniciens certifiés HP, DELL et LENOVO.</li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTACT -->
+        <section id="contact" class="py-24 px-6 border-t border-neonBlue/10 bg-neonBlue/5 scroll-mt-16">
+            <div class="max-w-2xl mx-auto text-center">
+                <h2 class="text-2xl md:text-4xl font-cyber text-white mb-6">INITIATE_CONTACT</h2>
+                <p class="text-gray-400 mb-10 text-sm md:text-base leading-relaxed">
+                    Prêt à sécuriser l'avenir ou à collaborer à l'intersection des <span class="text-neonBlue font-semibold">infrastructures IT</span> et des <span class="text-neonRed font-semibold">systèmes industriels (OT)</span> ? <br> Mon terminal est ouvert.
+                </p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a href="mailto:amk20052020@gmail.com" class="px-6 py-3 bg-neonBlue text-darkBG hover:bg-white transition-all font-mono font-bold text-sm rounded-sm">
+                        [ EMAIL ]
+                    </a>
+                    <a href="https://linkedin.com/in/aminekacemi" target="_blank" class="px-6 py-3 border border-neonBlue/30 text-neonBlue hover:bg-neonBlue/10 transition-all font-mono font-bold text-sm rounded-sm">
+                        [ LINKEDIN ]
+                    </a>
+                    <a href="https://github.com/Shadowk05" target="_blank" class="px-6 py-3 border border-white/20 text-gray-200 hover:border-white hover:bg-white/5 transition-all font-mono font-bold text-sm rounded-sm">
+                        [ GITHUB ]
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <footer class="py-8 text-center text-xs text-gray-600 border-t border-white/5 bg-darkBG">
+            AMINE KACEMI © 2026 // ALL_RIGHTS_RESERVED
+        </footer>
+    </div>
+
+    <!-- JS SCRIPTS -->
+    <script>
+        // Script de scroll fluide
+        document.querySelectorAll('.smooth-link').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const targetId = this.getAttribute('href');
+                if (targetId.startsWith('#')) {
+                    e.preventDefault();
+                    const targetElement = document.querySelector(targetId);
+                    const mainContent = document.getElementById('main-content');
+                    
+                    if (targetElement && mainContent) {
+                        mainContent.scrollTo({
+                            top: targetElement.offsetTop - 60,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
+        });
+
+        const cursorDot = document.getElementById("cursor-dot");
+        const cursorOutline = document.getElementById("cursor-outline");
+
+        if(window.innerWidth > 768) {
+            window.addEventListener("mousemove", (e) => {
+                const posX = e.clientX;
+                const posY = e.clientY;
+                cursorDot.style.left = `${posX}px`;
+                cursorDot.style.top = `${posY}px`;
+                cursorOutline.animate({ left: `${posX}px`, top: `${posY}px` }, { duration: 500, fill: "forwards" });
+            });
+
+            document.querySelectorAll('a, button, .interactive-card').forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    cursorOutline.style.width = '50px'; cursorOutline.style.height = '50px';
+                    cursorOutline.style.backgroundColor = 'rgba(0, 210, 255, 0.05)'; cursorOutline.style.borderColor = 'rgba(0, 210, 255, 0.8)';
+                });
+                el.addEventListener('mouseleave', () => {
+                    cursorOutline.style.width = '36px'; cursorOutline.style.height = '36px';
+                    cursorOutline.style.backgroundColor = 'transparent'; cursorOutline.style.borderColor = 'rgba(0, 210, 255, 0.4)';
+                });
+            });
+        }
+
+        document.querySelectorAll(".interactive-card").forEach(card => {
+            card.addEventListener("mousemove", e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty("--mouse-x", `${x}px`);
+                card.style.setProperty("--mouse-y", `${y}px`);
+            });
+        });
+
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+        
+        async function runBootSequence() {
+            const b1 = document.getElementById('boot-text-1');
+            const b2 = document.getElementById('boot-text-2');
+            const b3 = document.getElementById('boot-text-3');
+
+            b1.innerText = "> Loading kernel modules (HP EliteBook 850 G8)...";
+            await sleep(400);
+            b2.innerText = "> Initializing Security & Pentesting protocols...";
+            await sleep(500);
+            b3.innerText = "> Access Granted. Welcome, Amk.";
+            await sleep(600);
+
+            document.getElementById('preloader').style.display = 'none';
+            document.getElementById('main-content').classList.remove('opacity-0');
+
+            startTypewriterLoop();
+        }
+
+        async function startTypewriterLoop() {
+            const phrases = [
+                "Technicien en Électricité de Maintenance Industrielle",
+                "Étudiant en Cybersécurité",
+                "Sécurité Offensive & Hardware Hacking"
+            ];
+            const el = document.getElementById("typewriter-text");
+            
+            let phraseIndex = 0;
+            let letterIndex = 0;
+            let isDeleting = false;
+
+            while(true) {
+                let currentPhrase = phrases[phraseIndex];
+
+                if (isDeleting) {
+                    el.innerText = currentPhrase.substring(0, letterIndex - 1);
+                    letterIndex--;
+                    if (letterIndex === 0) {
+                        isDeleting = false;
+                        phraseIndex = (phraseIndex + 1) % phrases.length;
+                        await sleep(400);
+                    } else {
+                        await sleep(25); 
+                    }
+                } else {
+                    el.innerText = currentPhrase.substring(0, letterIndex + 1);
+                    letterIndex++;
+                    if (letterIndex === currentPhrase.length) {
+                        isDeleting = true;
+                        await sleep(2500);
+                    } else {
+                        await sleep(60); 
+                    }
+                }
+            }
+        }
+
+        window.onload = runBootSequence;
+    </script>
+</body>
+</html>
